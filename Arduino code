@@ -1,0 +1,83 @@
+# Ardiono-Project
+
+// LED Pins
+int r1=2, y1=3, g1=4;   // North
+int r2=5, y2=6, g2=7;   // East
+int r3=8, y3=9, g3=10;  // South
+int r4=11, y4=12, g4=13;// West
+
+// Ultrasonic Sensor Pins
+int trigN = A0, echoN = A1;
+int trigE = A2, echoE = A3;
+int trigS = A4, echoS = A5;
+
+long readDistance(int trigPin, int echoPin) {
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(2);
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin, LOW);
+  long duration = pulseIn(echoPin, HIGH, 20000);
+  long distance = duration * 0.034 / 2;
+  return distance;
+}
+
+int getGreenTime(long distance) {
+  if (distance < 15) return 6000;
+  else if (distance < 30) return 4000;
+  else return 3000;
+}
+
+void setup() {
+  // LED setup
+  pinMode(r1, OUTPUT); pinMode(y1, OUTPUT); pinMode(g1, OUTPUT);
+  pinMode(r2, OUTPUT); pinMode(y2, OUTPUT); pinMode(g2, OUTPUT);
+  pinMode(r3, OUTPUT); pinMode(y3, OUTPUT); pinMode(g3, OUTPUT);
+  pinMode(r4, OUTPUT); pinMode(y4, OUTPUT); pinMode(g4, OUTPUT);
+
+  // Sensor setup
+  pinMode(trigN, OUTPUT); pinMode(echoN, INPUT);
+  pinMode(trigE, OUTPUT); pinMode(echoE, INPUT);
+  pinMode(trigS, OUTPUT); pinMode(echoS, INPUT);
+
+  Serial.begin(9600);
+}
+
+void loop() {
+  long dN = readDistance(trigN, echoN);
+  long dE = readDistance(trigE, echoE);
+  long dS = readDistance(trigS, echoS);
+
+  Serial.print("N: "); Serial.print(dN);
+  Serial.print(" | E: "); Serial.print(dE);
+  Serial.print(" | S: "); Serial.println(dS);
+
+  // North phase
+  digitalWrite(g1, HIGH);
+  digitalWrite(r2, HIGH); digitalWrite(r3, HIGH); digitalWrite(r4, HIGH);
+  delay(getGreenTime(dN));
+  digitalWrite(g1, LOW); digitalWrite(r2, LOW);
+  digitalWrite(y1, HIGH); digitalWrite(y2, HIGH); delay(1000);
+  digitalWrite(y1, LOW); digitalWrite(y2, LOW);
+  digitalWrite(r1, HIGH); digitalWrite(g2, HIGH);
+
+  // East phase
+  delay(getGreenTime(dE));
+  digitalWrite(g2, LOW); digitalWrite(r3, LOW);
+  digitalWrite(y2, HIGH); digitalWrite(y3, HIGH); delay(1000);
+  digitalWrite(y2, LOW); digitalWrite(y3, LOW);
+  digitalWrite(r2, HIGH); digitalWrite(g3, HIGH); digitalWrite(r4, HIGH);
+
+  // South phase
+  delay(getGreenTime(dS));
+  digitalWrite(g3, LOW); digitalWrite(r4, LOW);
+  digitalWrite(y3, HIGH); digitalWrite(y4, HIGH); delay(1000);
+  digitalWrite(y3, LOW); digitalWrite(y4, LOW);
+  digitalWrite(r3, HIGH); digitalWrite(g4, HIGH);
+
+  // West phase (fixed)
+  delay(3000);  // Or change if needed
+  digitalWrite(r3, LOW); digitalWrite(g4, LOW);
+  digitalWrite(y1, HIGH); digitalWrite(y4, HIGH); digitalWrite(r1, LOW); delay(1000);
+  digitalWrite(y1, LOW); digitalWrite(y4, LOW);
+}
